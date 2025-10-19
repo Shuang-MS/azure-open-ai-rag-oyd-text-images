@@ -3,8 +3,9 @@ import dotenv
 import os
 import json
 import random, string
+import re
 
-from openai import AzureOpenAI
+from openai import AzureOpenAI, OpenAI
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
@@ -113,15 +114,28 @@ def get_chat_msg_count():
     return len(st.session_state["references"])
 
 
+def remove_resource_markers(text):
+    if not text:
+        return text
+    patterns = [
+        re.compile(r"\s*[Rr]esource\s+[A-Za-z0-9+/=]+(?:;\d+)?", re.MULTILINE),
+        re.compile(r"\s*[A-Za-z0-9+/=]{30,}(?:;\d+)?", re.MULTILINE),
+    ]
+    for pattern in patterns:
+        text = pattern.sub(" ", text)
+    return re.sub(r"\s{2,}", " ", text).strip()
+
+
 def generate_response_data(completion):
-    content = completion["choices"][0]["message"]["content"]
-    context = completion["choices"][0]["message"]["context"]
-    total_tokens = completion["usage"]["total_tokens"]
-    prompt_tokens = completion["usage"]["prompt_tokens"]
-    completion_tokens = completion["usage"]["completion_tokens"]
+    content = remove_resource_markers(completion["choices"][0]["message"]["content"])
+    message = completion["choices"][0]["message"]
+    context = message.get("context", {})
+    total_tokens = completion["usage"].get("total_tokens", 0)
+    prompt_tokens = completion["usage"].get("prompt_tokens", 0)
+    completion_tokens = completion["usage"].get("completion_tokens", 0)
 
     citations = {'all': [], 'selected': []}
-    for idx, citation in enumerate(context["citations"]):
+    for idx, citation in enumerate(context.get("citations", [])):
         citation_reference = f"[doc{idx + 1}]"
         imgurls = []
 
@@ -130,7 +144,7 @@ def generate_response_data(completion):
 
         filepath = citation["filepath"]
         title = citation["title"]
-        snippet = citation["content"]
+        snippet = remove_resource_markers(citation["content"])
         chunk_id = citation["chunk_id"]
         replaced_html = f":blue-background[{citation_reference}]"
         content = content.replace(citation_reference, replaced_html)
@@ -154,7 +168,7 @@ def generate_response_data(completion):
 
 
 with st.sidebar:
-    on = st.toggle("Seetings")
+    on = st.toggle("Settings")
     if on:
         system_prompt = st.sidebar.text_area(
             "System Prompt", st.session_state['default_prompt'], height=100
@@ -252,6 +266,30 @@ def get_refs():
     return refs
 
 
+def get_image_caption(ref, img_url):
+    caption = ''
+    try:
+        parts = img_url.split('image_')[1].split('.png')[0].split('_')
+        if len(parts) >= 2:
+            page, img_num = parts[0], parts[1]
+            pdf_name = ref['title'].split('.')[0].replace('-', ' ')
+            caption = f'{pdf_name} (Page {page}, Picture {img_num})'
+    except Exception:
+        pass
+    if not caption:
+        caption = ref['title']
+    return f"{ref['citation_reference']} — {caption}"
+
+
+def render_reference_images(refs):
+    if not refs:
+        return
+    for ref in refs.get('selected', []):
+        for img in ref.get('imgurls', []):
+            caption = get_image_caption(ref, img)
+            st.image(img, use_column_width="auto", caption=caption)
+
+
 def render_references(refs, render_type, citation_type):
     refs = refs[citation_type]
     tab_names = [r["citation_reference"] for r in refs]
@@ -263,18 +301,8 @@ def render_references(refs, render_type, citation_type):
                 with tab:
                     ref = refs[i]
                     st.write(f"## {ref['citations']}")
-                    filename = ref["filepath"].split("/")[-1]
                     st.write(f"### [{ref['title']}]({ref['filepath']})")
                     st.write(ref["snippet"])
-                    for img in ref["imgurls"]:
-                        caption = ''
-                        try:
-                            page, img_num = img.split('image_')[1].split('.png')[0].split('_')
-                            pdf_name = ref['title'].split('.')[0].replace('-', ' ')
-                            caption = f'{pdf_name} (Page {page}, Picture {img_num})'
-                        except Exception as e:
-                            pass
-                        st.image(img, use_column_width="auto", caption=caption)
                     
     elif render_type == 'expenders':
         for i, tab in enumerate(tab_names):
@@ -282,15 +310,6 @@ def render_references(refs, render_type, citation_type):
             with st.expander(f":blue-background[{tab_names[i]}] [{ref['title']}]({ref['filepath']})"):
                 st.write(f"#### {ref['citations']}")
                 st.write(ref["snippet"])
-                for img in ref["imgurls"]:
-                    caption = ''
-                    try:
-                        page, img_num = img.split('image_')[1].split('.png')[0].split('_')
-                        pdf_name = ref['title'].split('.')[0].replace('-', ' ')
-                        caption = f'{pdf_name} (Page {page}, Picture {img_num})'
-                    except Exception as e:
-                        pass
-                    st.image(img, use_column_width="auto", caption=caption)
                     
 
 def llm_request(msg):
@@ -340,7 +359,22 @@ def get_llm_completion(prompt):
     except Exception as e:
         st.write(e)
         response = f"The API could not handle this content: {str(e)}"
-        print('>>> here???')
+        st.session_state["messages"].append({"role": "assistant", "content": response})
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": response,
+                        "context": {"citations": []},
+                    }
+                }
+            ],
+            "usage": {
+                "total_tokens": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+            },
+        }
     st.session_state["messages"].append({"role": "assistant", "content": response})
 
     return json.loads(completion.to_json())
@@ -356,6 +390,8 @@ def generate_response(prompt):
     except Exception as e:
         st.write(e)
         response = f"The API could not handle this content: {str(e)}"
+        st.session_state["messages"].append({"role": "assistant", "content": response})
+        return response, 0, 0, 0
     st.session_state["messages"].append({"role": "assistant", "content": response})
 
     total_tokens = completion.usage.total_tokens
@@ -365,7 +401,7 @@ def generate_response(prompt):
     return response, total_tokens, prompt_tokens, completion_tokens
 
 
-st.title("Azure Open AI RAG Om Your Data Demo App")
+st.title("Azure Open AI RAG On Your Data Demo App")
 
 response_container = st.container()
 container = st.container()
@@ -392,14 +428,16 @@ if st.session_state["generated"]:
         for i in range(len(st.session_state["generated"])):
             with st.chat_message('user', avatar=st.session_state['avatar_user']):
                 st.write(st.session_state["past"][i], unsafe_allow_html=True)
-                
+
+            refs = st.session_state["references"][i]
+
             with st.chat_message('user', avatar=st.session_state['avatar_ai']):
                 st.write(
                     st.session_state["generated"][i] + '\n\n --- \n\n' + '<p style="text-align: right; font-size:0.8em"> AI-generated content may be incorrect </p>',
                     unsafe_allow_html=True
                 )
-                
-            refs = st.session_state["references"][i]
+                render_reference_images(refs)
+
             render_references(refs, 'expenders', 'selected')
 
 
