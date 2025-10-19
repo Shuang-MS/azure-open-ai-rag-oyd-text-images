@@ -10,7 +10,7 @@
       "resourceUri": "AOAI_URI_HERE",
       "apiKey": "AOAI_API_KEY_HERE",
       "deploymentId": "AOAI_DEPLOYMENT_ID_HERE",
-      "dimensions": 1536,
+      "dimensions": 3072,
       "modelName": "AOAI_MODEL_NAME_HERE",
       "inputs": [
         {

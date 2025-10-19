@@ -92,7 +92,7 @@
       "searchAnalyzer": null,
       "analyzer": null,
       "normalizer": null,
-      "dimensions": 1536,
+      "dimensions": 3072,
       "vectorSearchProfile": "INDEX_NAME_HERE-azureOpenAi-text-profile",
       "vectorEncoding": null,
       "synonymMaps": []

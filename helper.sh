@@ -16,12 +16,12 @@ dest_file_path="raw_data/${file_name}"
 source_file_path="./sample-documents/${file_name}"
 
 model_deployment_name_embedding="${resource_group_name}-embedding"
-model_name_embedding="text-embedding-ada-002"
-model_version_embedding="2"
+model_name_embedding="text-embedding-3-large"
+model_version_embedding="1"
 model_deployment_name_chat="${resource_group_name}-chat"
-model_name_chat="gpt-4o"
-model_version_chat="2024-11-20"
-model_api_version_chat="2025-01-01-preview"
+model_name_chat="gpt-4.1"
+model_version_chat="2025-04-14"
+model_api_version_chat="2025-04-01-preview"
 
 
 create_ai_search_data_source() {
@@ -306,9 +306,13 @@ case $@ in
     python3 -m streamlit run ./app.py
     ;;
   docker-build)
+    newgrp docker
     docker build --no-cache -t "${resource_group_name}" .
     ;;
   docker-run)
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    sudo systemctl status docker
     docker run -it -d \
       -v .:/home/ubuntu/azure-open-ai-rag-oyd-text-images \
       -v ~/.azure:/home/ubuntu/.azure \
