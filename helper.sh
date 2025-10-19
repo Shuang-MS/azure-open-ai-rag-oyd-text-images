@@ -303,7 +303,7 @@ case $@ in
     ;;
   run-demo-app)
     cd ./demo-app
-    python3 -m streamlit run ./app.py
+    python3 -m streamlit run ./Chat.py
     ;;
   docker-build)
     newgrp docker

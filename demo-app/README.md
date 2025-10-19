@@ -31,7 +31,7 @@ Following are the environment variables you need to set before being able to run
 The app is build using the [streamlit framework](https://streamlit.io/). Since all python dependencies are installed, you're ready to run it. To run the app, execute the following command in your terminal:
 
 ```
-streamlit run ./app.py
+streamlit run ./Chat.py
 ```
 
 You should see the URL printed in your terminal. Use this URL in your browser to access the application. By default the URL should be `http://localhost:8501`. 

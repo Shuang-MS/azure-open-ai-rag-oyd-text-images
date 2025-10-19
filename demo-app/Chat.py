@@ -5,14 +5,13 @@ import json
 import random, string
 import re
 
-from openai import AzureOpenAI, OpenAI
+from openai import AzureOpenAI
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
+st.set_page_config(page_title="Chat", layout="wide")
 
-st.set_page_config(layout="wide")
 dotenv.load_dotenv()
-
 
 endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
 api_key = os.environ.get("AZURE_OPENAI_KEY")
@@ -83,9 +82,6 @@ if 'avatar_ai' not in st.session_state:
 if 'default_prompt' not in st.session_state:
     st.session_state['default_prompt'] = 'You are an AI assistant that helps people find information.'
 if 'aoai_client' not in st.session_state:
-    print(endpoint)
-    print(api_key)
-    print(api_version)
     st.session_state['aoai_client'] = AzureOpenAI(
         azure_endpoint=endpoint,
         # azure_ad_token_provider=token_provider,
