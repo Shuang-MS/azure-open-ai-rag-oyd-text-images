@@ -24,3 +24,5 @@ notes.md
 debug.json
 
 sample-documents/_*.pdf
+__pycache__/
+*.pyc

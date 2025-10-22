@@ -11,6 +11,7 @@ search_semanic_config=search-aoai-emb-semantic-configuration
 search_query_type=vector_semantic_hybrid
 
 container_name="data"
+custom_container_name="sustainable-ai-pdf-images-2"
 file_name="${file_name:-"Azure-Kubernetes-Service.pdf"}"
 dest_file_path="raw_data/${file_name}"
 source_file_path="./sample-documents/${file_name}"
@@ -117,7 +118,36 @@ get_blob_sas_token() {
     --expiry "${expiry_30_days}" \
     --output tsv)
 
+  if [ -f ./.env ]; then
+    sed -i '/^sas_token=/d' ./.env
+  fi
   echo "sas_token=\"${sas_token_value}\"" >> ./.env
+}
+
+get_blob_sas_token_custom() {
+  local requested_container="${1:-default}"
+  local target_container_name="${requested_container}"
+  if [ "${requested_container}" = "default" ] || [ -z "${requested_container}" ]; then
+    target_container_name="${custom_container_name}"
+  fi
+  expiry_30_days=$(date --date="30 days" +"%Y-%m-%d")
+
+  connection_string=$(az storage account show-connection-string \
+    --name "${storage_account_name}" \
+    --resource-group ${resource_group_name} \
+    --output tsv)
+
+  custom_sas_token_value=$(az storage container generate-sas \
+    --connection-string "${connection_string}" \
+    -n "${target_container_name}" \
+    --permissions r \
+    --expiry "${expiry_30_days}" \
+    --output tsv)
+
+  if [ -f ./.env ]; then
+    sed -i '/^custom_sas_token=/d' ./.env
+  fi
+  echo "custom_sas_token=\"${custom_sas_token_value}\"" >> ./.env
 }
 
 load_dot_env() {
@@ -147,6 +177,15 @@ configure_demo_app_env_file() {
   echo "SEARCH_SEMANTIC_CONFIGURATION=${search_semanic_config}" >> ./demo-app/.env
   echo "SEARCH_QUERY_TYPE=${search_query_type}" >> ./demo-app/.env
   echo "BLOB_SAS_TOKEN=\"${sas_token}\"" >> ./demo-app/.env
+}
+
+configure_demo_app_custom_env_file() {
+  load_dot_env
+  load_dot_env_aoai
+  
+  echo "INDEX_NAME_CUSTOM=${custom_index_name}" >> ./demo-app/.env
+  echo "STORAGE_ACCOUNT_NAME=${storage_account_name}" >> ./demo-app/.env
+  echo "BLOB_SAS_TOKEN_CUSTOM=\"${custom_sas_token}\"" >> ./demo-app/.env
 }
 
 case $@ in
@@ -294,8 +333,18 @@ case $@ in
 
     get_blob_sas_token
     ;;
+  get-blob-sas-custom*)
+    load_dot_env
+
+    if [ -n "${2:-}" ]; then
+      get_blob_sas_token_custom "$2"
+    else
+      get_blob_sas_token
+    fi
+    ;;
   create-dot-env-demo-app)
     configure_demo_app_env_file
+    configure_demo_app_custom_env_file
     ;;
   install-demo-app-dependencies)
     cd ./demo-app
@@ -322,6 +371,7 @@ case $@ in
       "${resource_group_name}"
     ;;
   docker-exec)
+    docker start aoai-rag-oyd
     docker exec -it "${resource_group_name}" bash
     ;;
   docker-container-stop-remove|dcsr)
