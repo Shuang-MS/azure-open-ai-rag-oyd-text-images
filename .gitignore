@@ -23,6 +23,7 @@ notes.md
 .env_bk
 debug.json
 
-sample-documents/_*.pdf
+sample-documents/
 __pycache__/
 *.pyc
+*.http

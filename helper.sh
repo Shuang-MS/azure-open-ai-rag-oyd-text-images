@@ -5,7 +5,8 @@ template_file="main.bicep"
 bicep_deployment_name="main"
 resource_group_name="aoai-rag-oyd"
 
-index_name="search-aoai-emb"
+# index_name="search-aoai-emb"
+index_name="search-aoai-emb-v1"
 api_version="2024-09-01-preview"
 search_semanic_config=search-aoai-emb-semantic-configuration
 search_query_type=vector_semantic_hybrid
@@ -361,7 +362,7 @@ case $@ in
   docker-run)
     sudo systemctl start docker
     sudo systemctl enable docker
-    sudo systemctl status docker
+
     docker run -it -d \
       -v .:/home/ubuntu/azure-open-ai-rag-oyd-text-images \
       -v ~/.azure:/home/ubuntu/.azure \

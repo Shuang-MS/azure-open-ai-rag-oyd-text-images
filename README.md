@@ -232,3 +232,10 @@ Copy your document into the `./sample-documents` directory.
 `bash ./helper.sh run-indexer`
 
 Congratulations! You can now use the demo app to ask questions about your own document.
+
+## Next steps:
+
+- Display images under the citation anchor
+- Remove "[doc1]" and display reference in hidden pages
+- Voice control
+- Input image to search
