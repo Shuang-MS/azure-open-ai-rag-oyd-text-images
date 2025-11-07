@@ -245,7 +245,6 @@ def build_citation(index: int, citation: Dict[str, Any]) -> Dict[str, Any]:
         "title": title,
     }
 
-
 def llm_request(messages: List[Dict[str, str]]) -> Dict[str, Any]:
     client = st.session_state["aoai_client"]
     search_parameters: Dict[str, Any] = {
