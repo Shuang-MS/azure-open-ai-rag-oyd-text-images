@@ -233,9 +233,14 @@ Copy your document into the `./sample-documents` directory.
 
 Congratulations! You can now use the demo app to ask questions about your own document.
 
-## Next steps:
+### Custom index
 
-- Display images under the citation anchor
-- Remove "[doc1]" and display reference in hidden pages
+You may use another index with different fields, such as using demo-app/pages/3_Custom_Index_Inline.py. 
+
+- In demo-app/.env, add INDEX_NAME_CUSTOM with the custom index name. You may also need to edit the Search endpoint and keys if the index is from another Search service.
+- Make sure calling the LLM with correct field-mapps. See demo-app/pages/3_Custom_Index_Inline.py function ` `llm_request`.
+- There can be some permission issues. Refer to the Workshop to follow the steps.
+
+## Next steps:
 - Voice control
 - Input image to search
