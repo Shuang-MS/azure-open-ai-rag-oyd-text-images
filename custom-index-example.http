@@ -5,6 +5,7 @@
 @openAIKey = <AZURE_OPENAI_KEY>
 @chatCompletionResourceUri = https://<AZURE_OPENAI_ENDPOINT>/openai/deployments/<AZURE_OPENAI_CHATGPT_DEPLOYMENT>/chat/completions?api-version=<AZURE_OPENAI_API_VERSION>
 @imageProjectionContainer=<custom_container_name>
+@embeddingDeployment = <AZURE_OPENAI_CHATGPT_EMBEDDING_DEPLOYMENT>
 
 @dataSourceName = doc-intelligence-image-verbalization-ds
 @indexName = doc-intelligence-image-verbalization-index
@@ -151,7 +152,7 @@ POST {{searchUrl}}/indexes?api-version=2025-08-01-preview   HTTP/1.1
                 "kind": "azureOpenAI",    
                 "azureOpenAIParameters": {
                     "resourceUri": "{{openAIResourceUri}}",
-                    "deploymentId": "aoai-rag-oyd-embedding",
+                    "deploymentId": "{{embeddingDeployment}}",
                     "apiKey": "{{openAIKey}}",
                     "modelName": "text-embedding-3-large"
                 }
@@ -233,7 +234,7 @@ POST {{searchUrl}}/skillsets?api-version=2025-08-01-preview   HTTP/1.1
                 }
             ],
             "resourceUri": "{{openAIResourceUri}}",
-            "deploymentId": "aoai-rag-oyd-embedding",
+            "deploymentId": "{{embeddingDeployment}}",
             "apiKey": "{{openAIKey}}",
             "dimensions": 3072,
             "modelName": "text-embedding-3-large"
@@ -286,7 +287,7 @@ POST {{searchUrl}}/skillsets?api-version=2025-08-01-preview   HTTP/1.1
                 }
             ],
             "resourceUri": "{{openAIResourceUri}}",
-            "deploymentId": "aoai-rag-oyd-embedding",
+            "deploymentId": "{{embeddingDeployment}}",
             "apiKey": "{{openAIKey}}",
             "dimensions": 3072,
             "modelName": "text-embedding-3-large"
