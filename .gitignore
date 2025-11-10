@@ -26,4 +26,5 @@ debug.json
 sample-documents/
 __pycache__/
 *.pyc
-*.http
+https/
+.custom-index.http
