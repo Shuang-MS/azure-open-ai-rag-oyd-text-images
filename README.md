@@ -237,9 +237,12 @@ Congratulations! You can now use the demo app to ask questions about your own do
 
 You may use another index with different fields, such as using demo-app/pages/3_Custom_Index_Inline.py. 
 
-- In demo-app/.env, add INDEX_NAME_CUSTOM with the custom index name. You may also need to edit the Search endpoint and keys if the index is from another Search service.
-- Make sure calling the LLM with correct field-mapps. See demo-app/pages/3_Custom_Index_Inline.py function ` `llm_request`.
-- There can be some permission issues. Refer to the Workshop to follow the steps.
+- In demo-app/.env, replace the values with your selected resources.
+- Set INDEX_NAME_CUSTOM with the index name.
+- Set STORAGE_ACCOUNT_NAME to be the storage account name holding your image files.
+- Generate a SAS token for the container where the images locate, and set the BLOB_SAS_TOKEN_CUSTOM with this value.
+- Make sure your AI Search Service accepts key-based authorization
+- Go to the web, and select the Custom Index Inline page.
 
 ## Next steps:
 - Voice control

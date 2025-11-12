@@ -301,6 +301,7 @@ def llm_request(messages: List[Dict[str, str]]) -> Dict[str, Any]:
 def process_completion(completion: Dict[str, Any]) -> tuple[str, str, List[Dict[str, Any]], Dict[str, Any]]:
     message = completion["choices"][0]["message"]
     raw_content = message.get("content", "")
+    print("Raw content:", raw_content)
     content = remove_resource_markers(raw_content)
 
     citations: List[Dict[str, Any]] = []
@@ -312,6 +313,7 @@ def process_completion(completion: Dict[str, Any]) -> tuple[str, str, List[Dict[
         if placeholder not in raw_content:
             continue  # skip unused doc
         built = build_citation(idx, citation)
+        citation_token = built["citation_reference"]
         if built["has_images"]:
             image_tags: List[str] = []
             for image_index, image_url in enumerate(built["images"], start=1):
@@ -322,10 +324,9 @@ def process_completion(completion: Dict[str, Any]) -> tuple[str, str, List[Dict[
                 image_tags.append(
                     f"<div class='inline-citation-image'><img src=\"{escaped_url}\" alt=\"{alt_text}\" style=\"max-width: 100%; border-radius: 4px; margin: 0.5rem 0;\" /></div>"
                 )
-            replacement = "\n".join(image_tags)
-        else:
-            replacement = ""
-        content = content.replace(built["citation_reference"], replacement)
+            inline_markup = "\n".join(image_tags)
+            content = content.replace(citation_token, inline_markup, 1)
+        content = content.replace(citation_token, "")
         citations.append(built)
 
     usage = completion.get("usage", {})
